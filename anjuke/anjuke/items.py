@@ -14,10 +14,12 @@ class AnjukeItem(scrapy.Item):
     pass
 
 class PageItem(scrapy.Item):
-    # page
-    page_id = scrapy.Field()
-    # url
-    url = scrapy.Field()
+    # 页数
+    page = scrapy.Field()
+    # 页面路径
+    page_url = scrapy.Field()
+    # 房屋路径
+    house_urls = scrapy.Field()
 
 class HouseItem(scrapy.Item):
     # ID

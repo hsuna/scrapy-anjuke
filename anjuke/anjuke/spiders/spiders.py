@@ -9,7 +9,8 @@ from scrapy.conf import settings
 from scrapy.selector import Selector
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-from anjuke.items import PageItem,HouseItem
+from anjuke.items import PageItem, HouseItem
+
 
 class AnjukeSpider(CrawlSpider):
     name = 'anjuke'
@@ -33,36 +34,40 @@ class AnjukeSpider(CrawlSpider):
         self.houseColl = db[settings['MONGODB_COLLECTION_HOUSE']]
 
     def start_requests(self):
-        for i in range(1, 500):
+        for i in range(1, 60):
             url = 'https://m.anjuke.com/gz/sale/?from=anjuke_home&page='+str(i)
             result = self.pageColl.find_one({'page_url': url})
             if result:
-                self.parse_urls(result['house_urls'])
+                urls = result['house_urls']
+                for url in urls:
+                    if self.check_url(url):
+                        yield scrapy.Request(url, callback=self.parse_item)
             else:
                 yield scrapy.Request(url, callback=self.parse_page)
 
     def parse_page(self, response):
         selector = Selector(response)
         urls = selector.xpath('//a[contains(@class, "house-item")]/@href').extract()
-        self.parse_urls(urls)
+        for url in urls:
+            if self.check_url(url):
+                yield scrapy.Request(url, callback=self.parse_item)
 
         item = PageItem()
-        item['page_id'       ] = re.match(r'.*&page=(\d*).*', response.url, re.M|re.I).group(1)
-        item['page_url'     ] = response.url
-        item['house_urls'     ] = urls
+        item['page'] = re.match(r'.*&page=(\d*).*', response.url, re.M | re.I).group(1)
+        item['page_url'] = response.url
+        item['house_urls'] = urls
         return item
-    
-    def parse_urls(self, urls):
-        for url in urls:
-            house_id = re.match(r'.*/gz/sale/(\w*).*', url, re.M|re.I)
-            if str(house_id) == 'None':
-                pass
+
+    def check_url(self, url):
+        house_id = re.match(r'.*/gz/sale/(\w*).*', url, re.M | re.I)
+        if str(house_id) == 'None':
+            return False
+        else:
+            result = self.houseColl.find_one({'house_id': house_id.group(1)})
+            if result:
+                return False
             else:
-                result = self.houseColl.find_one({'house_id': house_id.group(1)})
-                if result:
-                    pass
-                else:
-                    yield scrapy.Request(url, callback=self.parse_item)
+                return True
 
     def parse_item(self, response):
         selector = Selector(response)
@@ -70,25 +75,25 @@ class AnjukeSpider(CrawlSpider):
         if len(housebasic.extract()) > 0:
             # 存放房子信息
             item = HouseItem()
-            item['house_id'       ] = re.match(r'.*/gz/sale/(\w*).*', response.url, re.M|re.I).group(1)
-            item['title'          ] = housebasic.xpath('normalize-space(./div[@class="house-address"]/text())').extract()[0]
-            item['tolprice'       ] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[1]/text())').extract()[0]
-            item['mode'           ] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[2]/text())').extract()[0]
-            item['area'           ] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[3]/text())').extract()[0]
+            item['house_id'] = re.match(r'.*/gz/sale/(\w*).*', response.url, re.M | re.I).group(1)
+            item['title'] = housebasic.xpath('normalize-space(./div[@class="house-address"]/text())').extract()[0]
+            item['tolprice'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[1]/text())').extract()[0]
+            item['mode'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[2]/text())').extract()[0]
+            item['area'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[3]/text())').extract()[0]
 
             names = [
-                'price'      ,
+                'price',
                 'orientation',
-                'floor'      ,
-                'decorate'   ,
-                'built'      ,
-                'house_type' ,
-                'agelimit'   ,
-                'elevator'   ,
-                'only'       ,
-                'budget'     ,
-                'district'   ,
-                'traffic'    ,
+                'floor',
+                'decorate',
+                'built',
+                'house_type',
+                'agelimit',
+                'elevator',
+                'only',
+                'budget',
+                'district',
+                'traffic',
             ]
             houseinfo = selector.xpath('//ul[@class="info-list"]/li')
             for i, info in enumerate(houseinfo):
@@ -101,5 +106,5 @@ class AnjukeSpider(CrawlSpider):
                     item[name] = a_text[0] + text[0]
                 else:
                     item[name] = text[0]
-            #print(item)
+            # print(item)
             return item

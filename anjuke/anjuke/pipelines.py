@@ -26,9 +26,9 @@ class AnjukePipeline(object):
                 valid=False
                 raise DropItem('Missing{0}!'.format(data))
         if valid:
-            if(isinstance(item, PageItem))
+            if(isinstance(item, PageItem)):
                 self.process_PageItem(item)
-            else if(isinstance(item, HouseItem))
+            elif(isinstance(item, HouseItem)):
                 self.process_HouseItem(item)
         return item
 
@@ -42,6 +42,6 @@ class AnjukePipeline(object):
     def process_HouseItem(self, item):
         try:
             self.houseColl.insert(dict(item))
-            logging.debug("插入数据[%s]"%item["id"])
+            logging.debug("插入数据[%s]"%item["house_id"])
         except Exception:
-            logging.debug("数据[%s]已经存在"%item["id"])
+            logging.debug("数据[%s]已经存在"%item["house_id"])
