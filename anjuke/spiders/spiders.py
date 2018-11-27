@@ -79,8 +79,8 @@ class AnjukeSpider(CrawlSpider):
             item['house_id'] = re.match(r'.*/gz/sale/(\w*).*', response.url, re.M | re.I).group(1)
             item['title'] = housebasic.xpath('normalize-space(./div[@class="house-address"]/text())').extract()[0]
             item['tolprice'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[1]/text())').extract()[0]
-            item['mode'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[2]/text())').extract()[0]
-            item['area'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[3]/text())').extract()[0]
+            item['area'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[2]/text())').extract()[0]
+            item['mode'] = housebasic.xpath('normalize-space(./div[@class="house-data"]/span[3]/text())').extract()[0]
 
             names = [
                 'price',
