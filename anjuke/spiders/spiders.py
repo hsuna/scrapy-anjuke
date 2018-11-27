@@ -16,7 +16,7 @@ class AnjukeSpider(CrawlSpider):
     name = 'anjuke'
     start_urls = ['https://m.anjuke.com/gz/sale/']
     custom_settings = {
-        "DOWNLOAD_DELAY": 5,
+        #"DOWNLOAD_DELAY": 5,
         "DEFAULT_REQUEST_HEADERS": {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -48,15 +48,16 @@ class AnjukeSpider(CrawlSpider):
     def parse_page(self, response):
         selector = Selector(response)
         urls = selector.xpath('//a[contains(@class, "house-item")]/@href').extract()
-        for url in urls:
-            if self.check_url(url):
-                yield scrapy.Request(url, callback=self.parse_item)
-
+        
         item = PageItem()
         item['page'] = re.match(r'.*&page=(\d*).*', response.url, re.M | re.I).group(1)
         item['page_url'] = response.url
         item['house_urls'] = urls
-        return item
+        yield item
+
+        for url in urls:
+            if self.check_url(url):
+                yield scrapy.Request(url, callback=self.parse_item)
 
     def check_url(self, url):
         house_id = re.match(r'.*/gz/sale/(\w*).*', url, re.M | re.I)
