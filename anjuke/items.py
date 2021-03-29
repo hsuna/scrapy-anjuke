@@ -28,6 +28,8 @@ class HouseItem(scrapy.Item):
     title = scrapy.Field()
     # 房屋总价
     tolprice = scrapy.Field()
+    # 房屋总价（单位）
+    tolprice_unit = scrapy.Field()
     # 房屋户型
     mode = scrapy.Field()
      # 建筑面积
@@ -57,3 +59,5 @@ class HouseItem(scrapy.Item):
     district = scrapy.Field()
     # 交通
     traffic = scrapy.Field()
+    # 网站地址
+    web_url = scrapy.Field()
